@@ -7,20 +7,20 @@ interface IToken {
 
 let tokens: Array<IToken> = [];
 
-export const addToken = (token: string, userId: string) => {
+export const addToken = (token: string, userId: string): void => {
     tokens.push({ token, userId });
 }
 
-export const removeToken = (token: string) => {
+export const removeToken = (token: string): void  => {
     tokens =  tokens.filter(({ token: t }) => t !== token)
 }
 
-export const isTokenValid = (token: string) => (
+export const isTokenValid = (token: string): boolean  => (
     tokens.some(({token: t }) => t === token)
 );
 
-export const getTokenOwner = (token: string) => (
+export const getTokenOwner = (token: string): string => (
     tokens.find(({token: t }) => t === token)?.userId
 )
 
-export const generateToken = () => faker.random.alphaNumeric(24);
+export const generateToken = (): string => faker.random.alphaNumeric(24);

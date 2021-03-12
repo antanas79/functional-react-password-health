@@ -1,6 +1,13 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { API } from '~/constants';
-import getUrl from '~/utils/getUrl';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { API } from "~/constants";
+import getUrl from "~/utils/getUrl";
+import logout from "../services/logout";
 
 interface IUser {
   updateUser: () => void;
@@ -13,8 +20,8 @@ interface IUser {
 }
 
 const UserContext = createContext<IUser>({
-  updateUser: () => {},
-  deleteData: () => {},
+  updateUser: null,
+  deleteData: null,
   errorMessage: null,
   isLoading: true,
   username: null,
@@ -22,14 +29,19 @@ const UserContext = createContext<IUser>({
   id: null,
 });
 
-export const useUserContext = () => useContext(UserContext);
+export const useUserContext = (): IUser => useContext(UserContext);
 
-export const UserContextProvider = ({ children }) => {
+export const UserContextProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}): JSX.Element => {
   const [errorMessage, setErrorMessage] = useState<string>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [username, setUsername] = useState<string>(null);
   const [email, setEmail] = useState<string>(null);
   const [id, setId] = useState<string>(null);
+  const ac = useRef(new AbortController());
 
   const updateUser = async () => {
     setErrorMessage(null);
@@ -37,22 +49,37 @@ export const UserContextProvider = ({ children }) => {
 
     try {
       const response = await fetch(getUrl(API.User), {
+        signal: ac.current.signal,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        }
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
       });
 
-      const data = await response.json();
+      if (response.status >= 400 && response.status < 600) {
+        if (response.status === 401) {
+          setErrorMessage("Incorrect token!");
+          deleteData();
+          logout();
+        } else {
+          setErrorMessage("Bad response from server!");
+        }
+      } else {
+        if (response) {
+          const data = await response.json();
+          setUsername(data?.username);
+          setEmail(data?.email);
+          setId(data?.id);
+        }
+      }
 
-      setUsername(data?.username);
-      setEmail(data?.email);
-      setId(data?.id);
+      setIsLoading(false);
     } catch (error) {
       setErrorMessage(error.message);
+      throw error;
     }
 
     setIsLoading(false);
-  }
+  };
 
   const deleteData = () => {
     setErrorMessage(null);
@@ -63,7 +90,8 @@ export const UserContextProvider = ({ children }) => {
   };
 
   useEffect(() => {
-   updateUser();
+    updateUser();
+    return () => ac.current.abort();
   }, []);
 
   const value = {
@@ -76,11 +104,7 @@ export const UserContextProvider = ({ children }) => {
     id,
   };
 
-  return (
-    <UserContext.Provider value={value}>
-      {children}
-    </UserContext.Provider>
-  )
-}
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+};
 
 export default UserContext;

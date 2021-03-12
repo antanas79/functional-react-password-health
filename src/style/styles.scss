@@ -32,6 +32,16 @@ html, body, #app {
 .loading-screen {
   @include flex-center;
   font-size: large;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: hsla(0,0%,100%,.7);
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  text-align: center;
+  z-index: 999;
 }
 
 .modal {
@@ -43,4 +53,9 @@ html, body, #app {
   flex-direction: column;
   left: 40%;
   top: 38%;
+}
+
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
 }

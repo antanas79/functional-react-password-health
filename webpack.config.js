@@ -1,4 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
 const Dotenv = require('dotenv-webpack');
 const path = require('path');
 
@@ -45,6 +46,7 @@ module.exports = {
             inject: true,
             template: path.resolve('./public/index.html'),
         }),
+        new ESLintPlugin()
     ],
     devServer: {
         historyApiFallback: true,
